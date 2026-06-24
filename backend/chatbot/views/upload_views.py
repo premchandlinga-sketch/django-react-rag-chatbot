@@ -5,6 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+from chatbot.models import ChatSession
+
 from chatbot.services.document_service import (
     DocumentService
 )
@@ -20,6 +22,10 @@ class UploadPDFAPIView(APIView):
 
         pdf_file = request.FILES.get("file")
 
+        session_id = request.data.get(
+            "session_id"
+        )
+
         if not pdf_file:
 
             return Response(
@@ -29,6 +35,32 @@ class UploadPDFAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        if not session_id:
+
+            return Response(
+                {
+                    "error":
+                    "session_id is required"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+
+            session = ChatSession.objects.get(
+                id=session_id
+            )
+
+        except ChatSession.DoesNotExist:
+
+            return Response(
+                {
+                    "error":
+                    "Session not found"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         upload_dir = os.path.join(
             settings.BASE_DIR,
             "uploads"
@@ -36,12 +68,13 @@ class UploadPDFAPIView(APIView):
 
         os.makedirs(
             upload_dir,
-            exist_ok=True)
+            exist_ok=True
+        )
 
         upload_path = os.path.join(
             upload_dir,
             pdf_file.name
-    )
+        )
 
         with open(
             upload_path,
@@ -50,7 +83,9 @@ class UploadPDFAPIView(APIView):
 
             for chunk in pdf_file.chunks():
 
-                destination.write(chunk)
+                destination.write(
+                    chunk
+                )
 
         documents = (
             DocumentService.load_pdf(
@@ -64,13 +99,28 @@ class UploadPDFAPIView(APIView):
             )
         )
 
+        if not session.collection_name:
+
+            session.collection_name = (
+                f"session_{session.id}"
+            )
+
+            session.save()
+
         VectorStoreService.create_vector_store(
-            chunks
+            chunks,
+            session.collection_name
         )
 
         return Response(
             {
-                "message": "PDF uploaded successfully",
-                "chunks": len(chunks)
+                "message":
+                "PDF uploaded successfully",
+
+                "collection":
+                session.collection_name,
+
+                "chunks":
+                len(chunks)
             }
         )

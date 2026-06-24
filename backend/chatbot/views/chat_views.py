@@ -10,7 +10,9 @@ from chatbot.models import (
 from chatbot.services.rag_service import (
     RAGService
 )
-
+from chatbot.services.title_service import (
+    TitleService
+)
 
 class ChatAPIView(APIView):
 
@@ -62,6 +64,24 @@ class ChatAPIView(APIView):
             role="user",
             content=question
         )
+        user_message_count = (
+            ChatMessage.objects.filter(
+                session=session,
+                role="user"
+            ).count()
+        )
+
+        if user_message_count == 1:
+
+            title = (
+                TitleService.generate_title(
+                question
+                )
+            )
+
+            session.title = title
+
+            session.save()
 
         recent_messages = (
             ChatMessage.objects.filter(

@@ -16,13 +16,36 @@ class RAGService:
         conversation_history=""
     ):
 
-        retrieved_docs = (
-            VectorStoreService.retrieve_documents(
-                query=question,
-                collection_name=collection_name,
-                k=3
+        if not collection_name:
+
+            return (
+                "No documents have been uploaded "
+                "for this chat session."
             )
-        )
+
+        try:
+
+            retrieved_docs = (
+                VectorStoreService.retrieve_documents(
+                    query=question,
+                    collection_name=collection_name,
+                    k=3
+                )
+            )
+
+        except Exception:
+
+            return (
+                "No documents have been uploaded "
+                "for this chat session."
+            )
+
+        if not retrieved_docs:
+
+            return (
+                "I could not find this information "
+                "in the uploaded documents."
+            )
 
         context = "\n\n".join(
             [
@@ -32,7 +55,14 @@ class RAGService:
         )
 
         prompt = f"""
-You are a helpful AI assistant.
+You are a document assistant.
+
+Use ONLY the provided context.
+
+If the answer is not present in the context,
+reply exactly:
+
+I could not find this information in the uploaded documents.
 
 Conversation History:
 {conversation_history}
@@ -40,7 +70,7 @@ Conversation History:
 Context:
 {context}
 
-Current Question:
+Question:
 {question}
 
 Answer:

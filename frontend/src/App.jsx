@@ -29,6 +29,12 @@ function App() {
         <ChatWindow
           messages={messages}
           loading={loading}
+          selectedSessionId={
+            selectedSessionId
+          }
+          setMessages={
+            setMessages
+          } 
         />
 
         <MessageInput

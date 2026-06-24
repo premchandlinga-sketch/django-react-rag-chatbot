@@ -9,12 +9,14 @@ function MessageInput({
   setLoading,
   setRefreshSidebar,
 }) {
+
   const [question, setQuestion] =
     useState("");
 
   const sendMessage = async () => {
 
     if (!selectedSessionId) {
+
       alert(
         "Select a chat session"
       );
@@ -40,52 +42,9 @@ function MessageInput({
         }
       );
 
-      try {
-
-        const sessionsResponse =
-          await api.get(
-            "sessions/"
-          );
-
-        const currentSession =
-          sessionsResponse.data.find(
-            (session) =>
-              session.id ===
-              selectedSessionId
-          );
-
-        if (
-          currentSession &&
-          currentSession.title ===
-            "New Chat"
-        ) {
-
-          await api.put(
-            `sessions/${selectedSessionId}/`,
-            {
-              title:
-                question.length > 40
-                  ? question.substring(
-                      0,
-                      40
-                    ) + "..."
-                  : question,
-            }
-          );
-
-          setRefreshSidebar(
-            (prev) => !prev
-          );
-        }
-
-      } catch (error) {
-
-        console.error(
-          "Session title update error:",
-          error
-        );
-
-      }
+      setRefreshSidebar(
+        (prev) => !prev
+      );
 
       const response =
         await api.get(
@@ -120,9 +79,11 @@ function MessageInput({
           )
         }
         onKeyDown={(e) => {
+
           if (
             e.key === "Enter"
           ) {
+
             sendMessage();
           }
         }}

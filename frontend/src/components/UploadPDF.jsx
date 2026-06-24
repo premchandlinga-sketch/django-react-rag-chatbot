@@ -1,10 +1,22 @@
 import { useState } from "react";
 import api from "../services/api";
 
-function UploadPDF() {
-  const [file, setFile] = useState(null);
+function UploadPDF({
+  selectedSessionId,
+}) {
+  const [file, setFile] =
+    useState(null);
 
   const uploadFile = async () => {
+
+    if (!selectedSessionId) {
+
+      alert(
+        "Select a chat session first"
+      );
+
+      return;
+    }
 
     if (!file) {
 
@@ -13,25 +25,32 @@ function UploadPDF() {
       return;
     }
 
-    const formData = new FormData();
+    const formData =
+      new FormData();
 
     formData.append(
       "file",
       file
     );
 
+    formData.append(
+      "session_id",
+      selectedSessionId
+    );
+
     try {
 
-      const response = await api.post(
-        "upload/",
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
+      const response =
+        await api.post(
+          "upload/",
+          formData,
+          {
+            headers: {
+              "Content-Type":
+                "multipart/form-data",
+            },
+          }
+        );
 
       alert(
         response.data.message
@@ -54,7 +73,9 @@ function UploadPDF() {
         type="file"
         accept=".pdf"
         onChange={(e) =>
-          setFile(e.target.files[0])
+          setFile(
+            e.target.files[0]
+          )
         }
       />
 

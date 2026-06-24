@@ -35,4 +35,9 @@ urlpatterns = [
     "sessions/<int:session_id>/",
     ChatSessionAPIView.as_view()
     ),
+    path(
+    "sessions/<int:session_id>/messages/<int:message_id>/",
+    ChatMessageAPIView.as_view(),
+    name="delete-message"
+    ),
 ]

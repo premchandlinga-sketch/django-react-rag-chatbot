@@ -82,3 +82,33 @@ class ChatSessionAPIView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    def delete(
+        self,
+        request,
+        session_id
+    ):
+
+        try:
+
+            session = ChatSession.objects.get(
+                id=session_id
+            )
+
+        except ChatSession.DoesNotExist:
+
+            return Response(
+                {
+                    "error": "Session not found"
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        session.delete()
+
+        return Response(
+            {
+                "message":
+                "Session deleted successfully"
+            }
+       )    
