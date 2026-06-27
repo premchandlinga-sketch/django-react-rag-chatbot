@@ -10,9 +10,11 @@ from chatbot.models import (
 from chatbot.services.rag_service import (
     RAGService
 )
+
 from chatbot.services.title_service import (
     TitleService
 )
+
 
 class ChatAPIView(APIView):
 
@@ -64,6 +66,7 @@ class ChatAPIView(APIView):
             role="user",
             content=question
         )
+
         user_message_count = (
             ChatMessage.objects.filter(
                 session=session,
@@ -75,7 +78,7 @@ class ChatAPIView(APIView):
 
             title = (
                 TitleService.generate_title(
-                question
+                    question
                 )
             )
 
@@ -92,7 +95,9 @@ class ChatAPIView(APIView):
 
         history = []
 
-        for message in reversed(recent_messages):
+        for message in reversed(
+            recent_messages
+        ):
 
             history.append(
                 f"{message.role}: {message.content}"
@@ -102,11 +107,17 @@ class ChatAPIView(APIView):
             history
         )
 
-        answer = RAGService.ask(
-            question=question,
-            collection_name=session.collection_name,
-            conversation_history=conversation_history
+        rag_response = (
+            RAGService.ask(
+                question=question,
+                collection_name=session.collection_name,
+                conversation_history=conversation_history
+            )
         )
+
+        answer = rag_response["answer"]
+
+        sources = rag_response["sources"]
 
         ChatMessage.objects.create(
             session=session,
@@ -118,6 +129,7 @@ class ChatAPIView(APIView):
             {
                 "session_id": session_id,
                 "question": question,
-                "answer": answer
+                "answer": answer,
+                "sources": sources
             }
         )

@@ -4,7 +4,8 @@ from chatbot.views import (
     ChatSessionAPIView,
     ChatMessageAPIView,
     UploadPDFAPIView,
-    ChatAPIView
+    ChatAPIView,
+    UploadedDocumentAPIView,
 )
 
 urlpatterns = [
@@ -40,4 +41,9 @@ urlpatterns = [
     ChatMessageAPIView.as_view(),
     name="delete-message"
     ),
+    path(
+    "documents/<int:document_id>/",
+    UploadedDocumentAPIView.as_view(),
+    name="documents"
+),
 ]

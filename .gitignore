@@ -1,0 +1,21 @@
+venv/
+__pycache__/
+*.pyc
+
+**/.env
+
+db.sqlite3
+
+experiments/exp_venv/
+chroma_db/
+
+__pycache__/
+*.py[cod]
+
+# Environment files
+backend/.env
+experiments/.env
+
+
+# Jupyter
+.ipynb_checkpoints/

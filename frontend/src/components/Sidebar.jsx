@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
-import UploadPDF from "./UploadPDF";
-
 import "../styles/sidebar.css";
 
 function Sidebar({
@@ -18,8 +16,16 @@ function Sidebar({
   const [menuOpen, setMenuOpen] =
     useState(null);
 
+  const [search, setSearch] =
+    useState("");
+
+  const [expandedSession, setExpandedSession] =
+    useState(null);
+
   useEffect(() => {
+
     fetchSessions();
+
   }, [refreshSidebar]);
 
   const fetchSessions = async () => {
@@ -40,6 +46,7 @@ function Sidebar({
       console.error(error);
 
     }
+
   };
 
   const createSession = async () => {
@@ -50,8 +57,7 @@ function Sidebar({
         await api.post(
           "sessions/",
           {
-            title:
-              "New Chat",
+            title: "New Chat",
           }
         );
 
@@ -66,6 +72,7 @@ function Sidebar({
       console.error(error);
 
     }
+
   };
 
   const loadMessages = async (
@@ -92,7 +99,34 @@ function Sidebar({
       console.error(error);
 
     }
+
   };
+
+  const toggleSession =
+    (sessionId) => {
+
+      if (
+        expandedSession ===
+        sessionId
+      ) {
+
+        setExpandedSession(
+          null
+        );
+
+      } else {
+
+        setExpandedSession(
+          sessionId
+        );
+
+        loadMessages(
+          sessionId
+        );
+
+      }
+
+    };
 
   const renameSession =
     async (session) => {
@@ -107,7 +141,9 @@ function Sidebar({
         !newTitle ||
         newTitle.trim() === ""
       ) {
+
         return;
+
       }
 
       try {
@@ -127,6 +163,7 @@ function Sidebar({
         console.error(error);
 
       }
+
     };
 
   const deleteSession =
@@ -138,7 +175,9 @@ function Sidebar({
         );
 
       if (!confirmed) {
+
         return;
+
       }
 
       try {
@@ -159,6 +198,11 @@ function Sidebar({
           setSelectedSessionId(
             null
           );
+
+          setExpandedSession(
+            null
+          );
+
         }
 
       } catch (error) {
@@ -166,9 +210,21 @@ function Sidebar({
         console.error(error);
 
       }
+
     };
 
+  const filteredSessions =
+    sessions.filter(
+      (session) =>
+        session.title
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+    );
+
   return (
+
     <div className="sidebar">
 
       <div className="sidebar-title">
@@ -182,156 +238,223 @@ function Sidebar({
         + New Chat
       </button>
 
-      <UploadPDF
-        selectedSessionId={
-          selectedSessionId
+      <input
+        type="text"
+        placeholder="Search chats..."
+        value={search}
+        onChange={(e) =>
+          setSearch(
+            e.target.value
+          )
         }
+        className="search-input"
       />
 
       <hr />
 
-      {sessions.map(
+      {filteredSessions.map(
         (session) => (
+
           <div
             key={session.id}
-            className={`session-item ${
+            className={`session-card ${
               selectedSessionId ===
               session.id
                 ? "active-session"
                 : ""
             }`}
-            style={{
-              display: "flex",
-              justifyContent:
-                "space-between",
-              alignItems:
-                "center",
-              position:
-                "relative",
-            }}
           >
 
-            <span
-              style={{
-                flex: 1,
-                cursor:
-                  "pointer",
-              }}
-              onClick={() =>
-                loadMessages(
-                  session.id
-                )
-              }
+            <div
+              className="session-header"
             >
-              {session.title}
-            </span>
 
-            <button
-              onClick={(e) => {
-
-                e.stopPropagation();
-
-                setMenuOpen(
-                  menuOpen ===
+              <span
+                className="session-title"
+                onClick={() =>
+                  toggleSession(
                     session.id
-                    ? null
-                    : session.id
-                );
-              }}
-              style={{
-                background:
-                  "transparent",
-                border:
-                  "none",
-                cursor:
-                  "pointer",
-                fontSize:
-                  "18px",
-                color: 
-                  "white",  
-              }}
-            >
-              ⋮
-            </button>
+                  )
+                }
+              >
 
-            {menuOpen ===
+                {expandedSession ===
+                session.id
+                  ? "▼ "
+                  : "▶ "}
+
+                {session.title}
+
+              </span>
+
+              <button
+                className="menu-btn"
+                onClick={(e) => {
+
+                  e.stopPropagation();
+
+                  setMenuOpen(
+                    menuOpen ===
+                    session.id
+                      ? null
+                      : session.id
+                  );
+
+                }}
+              >
+                ⋮
+              </button>
+
+              {menuOpen ===
+                session.id && (
+
+                <div
+                  className="menu-dropdown"
+                >
+
+                  <div
+                    onClick={() => {
+
+                      renameSession(
+                        session
+                      );
+
+                      setMenuOpen(
+                        null
+                      );
+
+                    }}
+                  >
+                    ✏ Rename
+                  </div>
+
+                  <div
+                    className="delete-option"
+                    onClick={() => {
+
+                      deleteSession(
+                        session.id
+                      );
+
+                      setMenuOpen(
+                        null
+                      );
+
+                    }}
+                  >
+                    🗑 Delete
+                  </div>
+
+                </div>
+
+              )}
+
+            </div>
+                        {expandedSession ===
               session.id && (
 
               <div
-                style={{
-                  position:
-                    "absolute",
-                  right: 0,
-                  top: "35px",
-                  background:
-                    "white",
-                  border:
-                    "1px solid #ddd",
-                  borderRadius:
-                    "8px",
-                  boxShadow:
-                    "0 2px 10px rgba(0,0,0,0.1)",
-                  zIndex: 100,
-                  minWidth:
-                    "120px",
-                }}
+                className="documents-container"
               >
 
-                <div
-                  onClick={() => {
+                {session.documents &&
+                session.documents.length >
+                  0 ? (
 
-                    renameSession(
-                      session
-                    );
+                  session.documents.map(
+                    (document) => (
 
-                    setMenuOpen(
-                      null
-                    );
-                  }}
-                  style={{
-                    padding:
-                      "10px",
-                    cursor:
-                      "pointer",
-                    color:
-                      "black",  
-                  }}
-                >
-                  ✏ Rename
-                </div>
+                      <div
+                        key={document.id}
+                        className="document-item"
+                      >
 
-                <div
-                  onClick={() => {
+                        <span
+                          className="document-name"
+                          title={
+                            document.file_name
+                          }
+                        >
+                          📄{" "}
+                          {
+                            document.file_name
+                          }
+                        </span>
 
-                    deleteSession(
-                      session.id
-                    );
+                        <button
+                          className="document-delete-btn"
+                          onClick={async (
+                            e
+                          ) => {
 
-                    setMenuOpen(
-                      null
-                    );
-                  }}
-                  style={{
-                    padding:
-                      "10px",
-                    cursor:
-                      "pointer",
-                    color:
-                      "red",
-                  }}
-                >
-                  🗑 Delete
-                </div>
+                            e.stopPropagation();
+
+                            const confirmed =
+                              window.confirm(
+                                "Delete this document?"
+                              );
+
+                            if (
+                              !confirmed
+                            ) {
+
+                              return;
+
+                            }
+
+                            try {
+
+                              await api.delete(
+                                `documents/${document.id}/`
+                              );
+
+                              await fetchSessions();
+
+                            } catch (
+                              error
+                            ) {
+
+                              console.error(
+                                error
+                              );
+
+                            }
+
+                          }}
+                        >
+                          🗑
+                        </button>
+
+                      </div>
+
+                    )
+
+                  )
+
+                ) : (
+
+                  <div
+                    className="no-documents"
+                  >
+                    No documents uploaded
+                  </div>
+
+                )}
 
               </div>
+
             )}
 
           </div>
+
         )
+
       )}
 
     </div>
+
   );
+
 }
 
 export default Sidebar;

@@ -2,7 +2,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 25px;
-  background-color: #f7f7f8;
+  background-color:white;
 }
 
 .message-row {
@@ -26,8 +26,8 @@
 }
 
 .user-bubble {
-  background-color: #10a37f;
-  color: white;
+  background-color: white;
+  color: black;
 }
 
 .assistant-bubble {

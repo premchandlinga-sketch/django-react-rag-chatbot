@@ -1,18 +1,45 @@
 from rest_framework import serializers
-from .models import ChatSession
+
+from .models import (
+    ChatSession,
+    ChatMessage,
+    UploadedDocument
+)
 
 
-class ChatSessionSerializer(serializers.ModelSerializer):
+class UploadedDocumentSerializer(
+    serializers.ModelSerializer
+):
 
     class Meta:
-        model = ChatSession
+
+        model = UploadedDocument
+
         fields = "__all__"
 
-from .models import ChatMessage
 
+class ChatSessionSerializer(
+    serializers.ModelSerializer
+):
 
-class ChatMessageSerializer(serializers.ModelSerializer):
+    documents = UploadedDocumentSerializer(
+        many=True,
+        read_only=True
+    )
 
     class Meta:
+
+        model = ChatSession
+
+        fields = "__all__"
+
+
+class ChatMessageSerializer(
+    serializers.ModelSerializer
+):
+
+    class Meta:
+
         model = ChatMessage
-        fields = "__all__"        
+
+        fields = "__all__"

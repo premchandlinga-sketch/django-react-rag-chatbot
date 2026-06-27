@@ -1,126 +1,89 @@
 import os
 
 from django.conf import settings
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from chatbot.models import ChatSession
-
-from chatbot.services.document_service import (
-    DocumentService
+from chatbot.models import (
+    ChatSession,
+    UploadedDocument
 )
 
-from chatbot.services.vector_store_service import (
-    VectorStoreService
-)
+from chatbot.services.document_service import DocumentService
+from chatbot.services.vector_store_service import VectorStoreService
 
 
 class UploadPDFAPIView(APIView):
 
     def post(self, request):
-
         pdf_file = request.FILES.get("file")
-
-        session_id = request.data.get(
-            "session_id"
-        )
+        session_id = request.data.get("session_id")
 
         if not pdf_file:
-
             return Response(
-                {
-                    "error": "No file uploaded"
-                },
+                {"error": "No file uploaded"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if not session_id:
-
             return Response(
-                {
-                    "error":
-                    "session_id is required"
-                },
+                {"error": "session_id is required"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
-
-            session = ChatSession.objects.get(
-                id=session_id
-            )
-
+            session = ChatSession.objects.get(id=session_id)
         except ChatSession.DoesNotExist:
-
             return Response(
-                {
-                    "error":
-                    "Session not found"
-                },
+                {"error": "Session not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        upload_dir = os.path.join(
-            settings.BASE_DIR,
-            "uploads"
-        )
+        # Save uploaded file
+        upload_dir = os.path.join(settings.BASE_DIR, "uploads")
+        os.makedirs(upload_dir, exist_ok=True)
 
-        os.makedirs(
-            upload_dir,
-            exist_ok=True
-        )
+        upload_path = os.path.join(upload_dir, pdf_file.name)
 
-        upload_path = os.path.join(
-            upload_dir,
-            pdf_file.name
-        )
-
-        with open(
-            upload_path,
-            "wb+"
-        ) as destination:
-
+        with open(upload_path, "wb+") as destination:
             for chunk in pdf_file.chunks():
+                destination.write(chunk)
 
-                destination.write(
-                    chunk
-                )
+        # Process document
+        documents = DocumentService.load_pdf(upload_path)
+        chunks = DocumentService.split_documents(documents)
 
-        documents = (
-            DocumentService.load_pdf(
-                upload_path
-            )
-        )
+        # Check if any text was extracted
+        if not chunks:
+            return Response({
+                "error": "Could not extract any text from the uploaded PDF. "
+                        "Please upload a digital PDF with selectable text "
+                        "(not scanned or image-only)."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-        chunks = (
-            DocumentService.split_documents(
-                documents
-            )
-        )
-
+        # Create or update collection name
         if not session.collection_name:
-
-            session.collection_name = (
-                f"session_{session.id}"
-            )
-
+            session.collection_name = f"session_{session.id}"
             session.save()
 
+        # Create vector store
         VectorStoreService.create_vector_store(
-            chunks,
-            session.collection_name
+            chunks, 
+            session.collection_name,
+            file_name=pdf_file.name
         )
 
-        return Response(
-            {
-                "message":
-                "PDF uploaded successfully",
-
-                "collection":
-                session.collection_name,
-
-                "chunks":
-                len(chunks)
-            }
+        # Save upload record
+        UploadedDocument.objects.create(
+            session=session,
+            file_name=pdf_file.name
         )
+
+        return Response({
+            "message": "PDF uploaded successfully",
+            "collection": session.collection_name,
+            "chunks": len(chunks),
+            "file_name": pdf_file.name
+        })

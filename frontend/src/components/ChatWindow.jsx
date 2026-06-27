@@ -31,6 +31,7 @@ function ChatWindow({
       setMessages(
         response.data
       );
+
     };
 
   const deleteMessage =
@@ -58,44 +59,11 @@ function ChatWindow({
         console.error(error);
 
       }
-    };
 
-  const editMessage =
-    async (message) => {
-
-      const newContent =
-        prompt(
-          "Edit message",
-          message.content
-        );
-
-      if (
-        !newContent ||
-        newContent.trim() === ""
-      ) {
-        return;
-      }
-
-      try {
-
-        await api.put(
-          `sessions/${selectedSessionId}/messages/${message.id}/`,
-          {
-            content:
-              newContent,
-          }
-        );
-
-        await refreshMessages();
-
-      } catch (error) {
-
-        console.error(error);
-
-      }
     };
 
   return (
+
     <div className="chat-window">
 
       {messages.map(
@@ -117,8 +85,7 @@ function ChatWindow({
                   : "assistant-bubble"
               }`}
               style={{
-                position:
-                  "relative",
+                position: "relative",
               }}
             >
 
@@ -129,71 +96,99 @@ function ChatWindow({
               </div>
 
               <div>
+
                 {message.content}
+
+                {message.role ===
+                  "assistant" &&
+                  message.sources &&
+                  message.sources.length >
+                    0 && (
+
+                  <div
+                    style={{
+                      marginTop:
+                        "15px",
+                      paddingTop:
+                        "10px",
+                      borderTop:
+                        "1px solid #444",
+                    }}
+                  >
+
+                    <div
+                      style={{
+                        fontWeight:
+                          "bold",
+                        marginBottom:
+                          "8px",
+                        color:
+                          "#8ab4f8",
+                      }}
+                    >
+                      📚 Sources
+                    </div>
+
+                    {message.sources.map(
+                      (
+                        source,
+                        index
+                      ) => (
+
+                        <div
+                          key={index}
+                          style={{
+                            fontSize:
+                              "13px",
+                            color:
+                              "#cccccc",
+                            marginBottom:
+                              "6px",
+                          }}
+                        >
+                          📄{" "}
+                          {source.file}
+                          {" — "}
+                          Page{" "}
+                          {source.page}
+                        </div>
+
+                      )
+                    )}
+
+                  </div>
+
+                )}
+
               </div>
 
-              <div
+              <button
+                onClick={() =>
+                  deleteMessage(
+                    message.id
+                  )
+                }
                 style={{
                   position:
                     "absolute",
                   top: "10px",
                   right: "10px",
-                  display:
-                    "flex",
-                  gap: "8px",
+                  border: "none",
+                  background:
+                    "transparent",
+                  cursor:
+                    "pointer",
+                  fontSize:
+                    "16px",
                 }}
               >
-
-                {message.role ===
-                  "user" && (
-
-                  <button
-                    onClick={() =>
-                      editMessage(
-                        message
-                      )
-                    }
-                    style={{
-                      border:
-                        "none",
-                      background:
-                        "transparent",
-                      cursor:
-                        "pointer",
-                      fontSize:
-                        "16px",
-                    }}
-                  >
-                    ✏
-                  </button>
-
-                )}
-
-                <button
-                  onClick={() =>
-                    deleteMessage(
-                      message.id
-                    )
-                  }
-                  style={{
-                    border:
-                      "none",
-                    background:
-                      "transparent",
-                    cursor:
-                      "pointer",
-                    fontSize:
-                      "16px",
-                  }}
-                >
-                  🗑
-                </button>
-
-              </div>
+                🗑
+              </button>
 
             </div>
 
           </div>
+
         )
       )}
 
@@ -208,7 +203,9 @@ function ChatWindow({
       <div ref={bottomRef}></div>
 
     </div>
+
   );
+
 }
 
 export default ChatWindow;
